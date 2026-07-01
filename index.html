@@ -1,21 +1,708 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator Panel</title>
-
-    <!-- CSS -->
+    <title>CLT Panel Calculator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --c-bg:       #f4f4f6;
+            --c-surface:  #ffffff;
+            --c-border:   #e2e2e6;
+            --c-text:     #111111;
+            --c-muted:    #6b6b70;
+            --c-accent:   #1a56a0;
+            --c-accent-l: #e8f0fb;
+            --c-green:    #1a6640;
+            --c-green-l:  #e6f4ec;
+            --c-dark:     #18181b;
+            --c-wood0:    #c8a86b;
+            --c-wood90:   #8c6e45;
+            --radius-sm:  4px;
+            --radius-md:  8px;
+            --radius-lg:  12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--c-bg);
+            color: var(--c-text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: var(--c-dark);
+            color: #fff;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-logo {
+            width: 26px; height: 26px;
+            background: #fff1;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .topbar-name { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+        .topbar-divider { width: 1px; height: 16px; background: #ffffff30; }
+        .topbar-sub { font-size: 11px; color: #aeaeb2; letter-spacing: .04em; }
+        .topbar-badge {
+            margin-left: auto;
+            font-size: 10px; color: #8e8e93;
+            border: 1px solid #3a3a3c;
+            padding: 2px 10px; border-radius: 20px;
+        }
+
+        /* ── PAGE ── */
+        .page { max-width: 1080px; margin: 0 auto; padding: 20px 16px 64px; }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+        .card-head {
+            padding: 14px 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-head-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--c-muted);
+        }
+        .card-body { padding: 14px 20px 20px; }
+
+        /* ── SECTION RULE ── */
+        .sec-rule {
+            height: 1px;
+            background: var(--c-border);
+            margin: 16px 0;
+        }
+
+        /* ── METHOD TABS ── */
+        .method-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+        .method-btn {
+            padding: 5px 16px;
+            font-size: 12px; font-weight: 500;
+            border: 1.5px solid var(--c-border);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            color: var(--c-muted);
+            cursor: pointer;
+            transition: all .12s;
+        }
+        .method-btn.active {
+            background: var(--c-accent);
+            color: #fff;
+            border-color: var(--c-accent);
+        }
+        .method-btn:hover:not(.active) {
+            border-color: var(--c-accent);
+            color: var(--c-accent);
+        }
+        .method-hint { font-size: 11px; color: var(--c-muted); margin-top: 5px; }
+
+        /* ── FORM LABELS ── */
+        .lbl {
+            display: block;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .08em;
+            color: var(--c-muted);
+            margin-bottom: 4px;
+        }
+        input[type=number], select {
+            height: 32px;
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm);
+            padding: 0 8px;
+            font-size: 12px;
+            width: 100%;
+            background: #fff;
+            color: var(--c-text);
+            outline: none;
+            transition: border-color .12s;
+            -webkit-appearance: none;
+        }
+        input[type=number]:focus, select:focus {
+            border-color: var(--c-accent);
+            box-shadow: 0 0 0 3px #1a56a015;
+        }
+
+        /* ── LAYER TABLE ── */
+        .layer-tbl { width: 100%; border-collapse: collapse; }
+        .layer-tbl thead tr {
+            border-bottom: 1.5px solid var(--c-border);
+        }
+        .layer-tbl th {
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .08em;
+            color: var(--c-muted);
+            padding: 6px 8px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .layer-tbl td { padding: 3px 6px; vertical-align: middle; }
+        .layer-tbl tbody tr { border-bottom: 1px solid #f2f2f5; }
+        .layer-tbl tbody tr:last-child { border: none; }
+        .layer-tbl tbody tr:hover { background: #fafafa; }
+        .layer-num {
+            font-size: 11px; font-weight: 700;
+            color: var(--c-muted);
+            text-align: center;
+            width: 28px;
+        }
+        .btn-rm {
+            background: none;
+            border: 1px solid #ffc9c9;
+            border-radius: var(--radius-sm);
+            color: #c0392b;
+            font-size: 11px;
+            padding: 2px 7px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-rm:hover { background: #fff0f0; }
+        .btn-add-layer {
+            font-size: 11px;
+            padding: 5px 12px;
+            border: 1.5px dashed var(--c-border);
+            border-radius: var(--radius-sm);
+            background: none;
+            color: var(--c-muted);
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all .12s;
+        }
+        .btn-add-layer:hover {
+            border-color: var(--c-accent);
+            color: var(--c-accent);
+        }
+
+        /* ── ORIENTATION INDICATOR ── */
+        .ori-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 20px;
+        }
+        .ori-0   { background: #fef3e2; color: #92530a; }
+        .ori-90  { background: #e8f0fb; color: #1a56a0; }
+
+        /* ── SVG DIAGRAM ── */
+        #svgWrap svg { display: block; width: 100%; }
+
+        /* ── CALCULATE BUTTON ── */
+        .btn-calc {
+            background: var(--c-green);
+            color: #fff;
+            border: none;
+            padding: 9px 24px;
+            font-size: 13px; font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background .12s, transform .08s;
+        }
+        .btn-calc:hover { background: #144f30; transform: translateY(-1px); }
+        .btn-calc:active { transform: none; }
+        .btn-calc svg { width: 14px; height: 14px; fill: currentColor; }
+
+        /* ── ALERT ── */
+        #alertBox .alert-item {
+            background: #fff5f5;
+            border: 1px solid #ffc9c9;
+            border-left: 3px solid #e74c3c;
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #a93226;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #alertBox .alert-item button {
+            margin-left: auto;
+            background: none; border: none;
+            color: #a93226; font-size: 16px;
+            cursor: pointer; line-height: 1;
+        }
+
+        /* ── OUTPUT SECTION ── */
+        .out-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        /* ── FORMULA BOX ── */
+        .formula {
+            background: #f9f9fb;
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            font-size: 11.5px;
+            color: #555;
+            font-style: italic;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .formula .ref {
+            font-size: 10px; color: #aaa;
+            font-style: normal;
+        }
+
+        /* ── RESULT TABLE ── */
+        .out-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .out-tbl thead th {
+            background: var(--c-dark);
+            color: #fff;
+            padding: 7px 8px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            white-space: nowrap;
+            text-align: right;
+        }
+        .out-tbl thead th:first-child { text-align: center; border-radius: 0; }
+        .out-tbl thead th.tc { text-align: center; }
+        .out-tbl tbody td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #f2f2f5;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .out-tbl tbody td.tc { text-align: center; }
+        .out-tbl tbody td.tl { text-align: left; }
+        .out-tbl tbody td:first-child { text-align: center; font-weight: 600; color: var(--c-muted); }
+        .out-tbl tbody tr:nth-child(even) { background: #fafafa; }
+        .out-tbl tfoot td {
+            padding: 7px 8px;
+            background: var(--c-accent-l);
+            font-weight: 700;
+            font-size: 11.5px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            border-top: 1.5px solid #b5cef0;
+        }
+        .out-tbl tfoot td:first-child { text-align: right; color: var(--c-accent); }
+
+        /* ── EI RESULT BOX ── */
+        .ei-box {
+            background: var(--c-green-l);
+            border: 1.5px solid #b7dfc7;
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .ei-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--c-muted); margin-bottom: 4px; }
+        .ei-val { font-size: 26px; font-weight: 800; color: var(--c-green); letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+        .ei-unit { font-size: 12px; color: var(--c-muted); margin-top: 3px; }
+        .ei-eq { font-size: 11px; color: var(--c-muted); }
+
+        /* ── LAYOUT HELPERS ── */
+        .row-gap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+        .grow { flex: 1; min-width: 0; }
+
+        @media (max-width: 640px) {
+            .topbar-sub, .topbar-divider { display: none; }
+            .ei-val { font-size: 20px; }
+            .card-body { padding: 12px 14px 16px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container py-4">
-        <h1 class="mb-4">Calculator Panel</h1>
-        <!-- Write Input On Here -->
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="topbar-logo">▦</div>
+    <span class="topbar-name">CLT Panel Calculator</span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-sub">Floor Panel Properties</span>
+    <span class="topbar-badge">proHolz Vol. 1</span>
+</div>
+
+<div class="page">
+
+    <!-- ALERT -->
+    <div id="alertBox"></div>
+
+    <!-- ══ INPUT CARD ══ -->
+    <div class="card">
+        <div class="card-head">
+            <span class="card-head-title">Input</span>
+        </div>
+        <div class="card-body">
+
+            <!-- Row 1: Method + params -->
+            <div class="row-gap" style="margin-bottom:16px; align-items:flex-end;">
+                <div>
+                    <label class="lbl">Analytical Method</label>
+                    <div class="method-wrap">
+                        <button class="method-btn active" data-method="shear-analogy" onclick="setMethod('shear-analogy')">Shear Analogy</button>
+                        <button class="method-btn" data-method="gamma" onclick="setMethod('gamma')">Gamma</button>
+                    </div>
+                    <div class="method-hint" id="methodHint">3 – 9 layers &nbsp;·&nbsp; symmetric layup required</div>
+                </div>
+                <div style="width:130px;">
+                    <label class="lbl" for="inpBeff">b<sub>eff</sub> (mm/m)</label>
+                    <input type="number" id="inpBeff" value="1000" min="100" step="100">
+                </div>
+                <div style="width:130px;" id="spanGroup" style="display:none">
+                    <label class="lbl" for="inpSpan">Span L (mm)</label>
+                    <input type="number" id="inpSpan" value="5000" min="500" step="100">
+                </div>
+            </div>
+
+            <div class="sec-rule"></div>
+
+            <!-- Row 2: table + diagram -->
+            <div class="row-gap">
+                <!-- Layer table -->
+                <div class="grow" style="min-width:300px;">
+                    <label class="lbl" style="margin-bottom:8px;">CLT Layup &nbsp;—&nbsp; Layers (top → bottom)</label>
+                    <table class="layer-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width:30px">#</th>
+                                <th>Thickness&nbsp;(mm)</th>
+                                <th>Orientation</th>
+                                <th>Grade</th>
+                                <th style="width:36px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="layerTableBody"></tbody>
+                    </table>
+                    <button class="btn-add-layer" onclick="addLayer()">+ Add Layer</button>
+                </div>
+
+                <!-- SVG Diagram -->
+                <div style="width:220px; flex-shrink:0;">
+                    <label class="lbl" style="margin-bottom:8px;">Cross-Section View</label>
+                    <div id="svgWrap"></div>
+                    <div style="display:flex;gap:10px;margin-top:6px;">
+                        <span style="font-size:10px;color:var(--c-muted);display:flex;align-items:center;gap:4px;">
+                            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-wood0);display:inline-block;"></span>0° Parallel
+                        </span>
+                        <span style="font-size:10px;color:var(--c-muted);display:flex;align-items:center;gap:4px;">
+                            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-wood90);display:inline-block;"></span>90° Perp.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculate -->
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                <button class="btn-calc" onclick="runCalculation()">
+                    <svg viewBox="0 0 16 16"><polygon points="3,1 13,8 3,15"/></svg>
+                    Calculate
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="calculator.js"></script>
+    <!-- ══ OUTPUT ══ -->
+    <div id="outputSection" style="display:none;">
+
+        <!-- SHEAR ANALOGY -->
+        <div id="sectionShearAnalogy" class="card">
+            <div class="card-head"><span class="card-head-title">Shear Analogy Method</span></div>
+            <div class="card-body">
+                <div class="formula">
+                    <span>EI<sub>eff</sub> = Σ E<sub>i</sub> · I<sub>i,loc</sub> &nbsp;+&nbsp; Σ E<sub>i</sub> · A<sub>i</sub> · a<sub>i</sub>²</span>
+                    <span class="ref">proHolz Vol.1 §4.1</span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="out-tbl">
+                        <thead>
+                            <tr>
+                                <th class="tc">[i]</th>
+                                <th class="tc">t (mm)</th>
+                                <th class="tc">z<sub>i</sub> (mm)</th>
+                                <th class="tc">Orient.</th>
+                                <th>E (MPa)</th>
+                                <th>b·t³/12 (mm⁴/m)</th>
+                                <th>b·t·a² (mm⁴/m)</th>
+                                <th>E·I<sub>loc</sub> (N·mm²/m)</th>
+                                <th>E·A·a² (N·mm²/m)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="saTableBody"></tbody>
+                        <tfoot id="saTableFoot"></tfoot>
+                    </table>
+                </div>
+                <div class="ei-box">
+                    <div>
+                        <div class="ei-lbl">Effective Bending Stiffness — EI<sub>eff</sub></div>
+                        <div class="ei-val" id="saEIeff">—</div>
+                        <div class="ei-unit">N·mm²/m</div>
+                    </div>
+                    <div class="ei-eq">EI<sub>eff</sub> = EI<sub>local</sub> + EI<sub>axial</sub></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAMMA -->
+        <div id="sectionGamma" class="card" style="display:none;">
+            <div class="card-head"><span class="card-head-title">Gamma Method</span></div>
+            <div class="card-body">
+                <div class="formula">
+                    <span>
+                        EI<sub>eff</sub> = Σ E<sub>i</sub>·I<sub>i,loc</sub> + Σ γ<sub>i</sub>·E<sub>i</sub>·A<sub>i</sub>·a<sub>i</sub>²
+                        &nbsp;|&nbsp;
+                        γ<sub>i</sub> = 1 / (1 + π²·E<sub>i</sub>·A<sub>i</sub>·s<sub>i</sub> / (G<sub>i</sub>·b·t<sub>i</sub>·L²))
+                    </span>
+                    <span class="ref">proHolz Vol.1 §4.2</span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="out-tbl">
+                        <thead>
+                            <tr>
+                                <th class="tc">[i]</th>
+                                <th class="tc">t (mm)</th>
+                                <th class="tc">z<sub>i</sub> (mm)</th>
+                                <th class="tc">Orient.</th>
+                                <th>E (MPa)</th>
+                                <th class="tc">γ<sub>i</sub></th>
+                                <th>a<sub>i</sub> (mm)</th>
+                                <th>E·I<sub>loc</sub> (N·mm²/m)</th>
+                                <th>γ·E·A·a² (N·mm²/m)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gaTableBody"></tbody>
+                        <tfoot id="gaTableFoot"></tfoot>
+                    </table>
+                </div>
+                <div class="ei-box">
+                    <div>
+                        <div class="ei-lbl">Effective Bending Stiffness — EI<sub>eff</sub></div>
+                        <div class="ei-val" id="gaEIeff">—</div>
+                        <div class="ei-unit">N·mm²/m</div>
+                    </div>
+                    <div class="ei-eq">EI<sub>eff</sub> = EI<sub>local</sub> + Σ γ·EA·a²</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="type/material-grade-type.js"></script>
+<script src="type/clt-layer-type.js"></script>
+<script src="type/clt-layup-type.js"></script>
+<script src="type/panel-properties-type.js"></script>
+<script src="calculation/panel-properties.js"></script>
+<script src="calculator.js"></script>
+
+<script>
+/* ══════════════════════════════════
+   SVG CROSS-SECTION DIAGRAM
+══════════════════════════════════ */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs={}) {
+    const el = document.createElementNS(SVG_NS, tag);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+    return el;
+}
+
+function updateDiagram(naFromTop = null) {
+    const rows  = [...document.querySelectorAll('#layerTableBody tr')];
+    const wrap  = document.getElementById('svgWrap');
+    wrap.innerHTML = '';
+    if (!rows.length) return;
+
+    const layers = rows.map(row => ({
+        t: parseFloat(row.querySelector('.inp-thickness')?.value) || 35,
+        o: parseInt(row.querySelector('.inp-orientation')?.value)  || 0,
+    }));
+
+    const totalT   = layers.reduce((s,l)=>s+l.t, 0);
+    const AX_W     = 34;
+    const DIM_W    = 44;
+    const PANEL_W  = 120;
+    const PAD_T    = 8;
+    const PAD_B    = 18;
+    const MAX_H    = 260;
+    const scale    = Math.min(1.6, (MAX_H - PAD_T - PAD_B) / totalT);
+    const panelH   = totalT * scale;
+    const svgW     = AX_W + PANEL_W + DIM_W;
+    const svgH     = panelH + PAD_T + PAD_B;
+    const xP       = AX_W;
+
+    const svg = svgEl('svg', { viewBox:`0 0 ${svgW} ${svgH}`, xmlns: SVG_NS });
+    const defs = svgEl('defs');
+    svg.appendChild(defs);
+
+    /* patterns */
+    layers.forEach((l, i) => {
+        const id = `gp${i}`;
+        let pat;
+        if (l.o === 0) {
+            pat = svgEl('pattern',{ id, x:0,y:0, width:PANEL_W, height:9, patternUnits:'userSpaceOnUse' });
+            pat.appendChild(svgEl('rect',{ x:0,y:0, width:PANEL_W,height:9, fill:'#c8a86b' }));
+            pat.appendChild(svgEl('line',{ x1:0,y1:2,x2:PANEL_W,y2:2.6, stroke:'#b0893e','stroke-width':'0.7',opacity:'0.8' }));
+            pat.appendChild(svgEl('line',{ x1:0,y1:5.5,x2:PANEL_W,y2:6, stroke:'#d9b87a','stroke-width':'0.4',opacity:'0.55' }));
+        } else {
+            pat = svgEl('pattern',{ id, x:0,y:0, width:14, height:60, patternUnits:'userSpaceOnUse' });
+            pat.appendChild(svgEl('rect',{ x:0,y:0, width:14,height:60, fill:'#8c6e45' }));
+            pat.appendChild(svgEl('line',{ x1:3.5,y1:0,x2:4,y2:60, stroke:'#6e5230','stroke-width':'0.7',opacity:'0.8' }));
+            pat.appendChild(svgEl('line',{ x1:9,y1:0,x2:9.5,y2:60, stroke:'#a07e56','stroke-width':'0.4',opacity:'0.55' }));
+        }
+        defs.appendChild(pat);
+    });
+
+    /* draw layers */
+    let yOff = PAD_T;
+    layers.forEach((l, i) => {
+        const lh = Math.max(10, l.t * scale);
+        svg.appendChild(svgEl('rect',{ x:xP, y:yOff, width:PANEL_W, height:lh,
+            fill:`url(#gp${i})`, stroke:'#4a2e0e','stroke-width':'0.8' }));
+        if (lh >= 14) {
+            const arrow = l.o === 0 ? '→' : '↑';
+            const txt = svgEl('text',{ x: xP+PANEL_W/2, y: yOff+lh/2+3.5,
+                'text-anchor':'middle', fill:'#fff',
+                'font-size':'8','font-weight':'700',
+                'font-family':'Segoe UI,system-ui,sans-serif' });
+            txt.textContent = `L${i+1}  ${arrow}  ${l.o}°`;
+            svg.appendChild(txt);
+        }
+        /* right tick + label */
+        svg.appendChild(svgEl('line',{ x1:xP+PANEL_W,y1:yOff, x2:xP+PANEL_W+4,y2:yOff, stroke:'#bbb','stroke-width':'0.7' }));
+        if (i===layers.length-1)
+            svg.appendChild(svgEl('line',{ x1:xP+PANEL_W,y1:yOff+lh, x2:xP+PANEL_W+4,y2:yOff+lh, stroke:'#bbb','stroke-width':'0.7' }));
+        if (lh >= 10) {
+            const dt = svgEl('text',{ x: xP+PANEL_W+8, y: yOff+lh/2+3.5,
+                fill:'#666','font-size':'8','font-family':'Segoe UI,system-ui,sans-serif' });
+            dt.textContent = `${l.t}mm`;
+            svg.appendChild(dt);
+        }
+        yOff += lh;
+    });
+
+    /* left axis */
+    svg.appendChild(svgEl('line',{ x1:xP,y1:PAD_T, x2:xP,y2:PAD_T+panelH, stroke:'#888','stroke-width':'0.9' }));
+    let cumT = 0;
+    [0, ...layers.map(l=>{ cumT+=l.t; return cumT; })].forEach(v => {
+        const ty = PAD_T + v*scale;
+        svg.appendChild(svgEl('line',{ x1:xP-5,y1:ty, x2:xP,y2:ty, stroke:'#888','stroke-width':'0.8' }));
+        const tl = svgEl('text',{ x:xP-7, y:ty+3.5, 'text-anchor':'end',
+            fill:'#777','font-size':'7.5','font-family':'Segoe UI,system-ui,sans-serif' });
+        tl.textContent = v;
+        svg.appendChild(tl);
+    });
+    const axLbl = svgEl('text',{ x:xP-22, y:PAD_T+panelH/2, 'text-anchor':'middle',
+        fill:'#aaa','font-size':'6.5','font-family':'Segoe UI,system-ui,sans-serif',
+        transform:`rotate(-90,${xP-22},${PAD_T+panelH/2})` });
+    axLbl.textContent = 'mm';
+    svg.appendChild(axLbl);
+
+    /* total bracket */
+    const bx = xP+PANEL_W+DIM_W-6;
+    svg.appendChild(svgEl('line',{ x1:bx,y1:PAD_T, x2:bx,y2:PAD_T+panelH, stroke:'#1a56a0','stroke-width':'1.2' }));
+    svg.appendChild(svgEl('line',{ x1:bx-4,y1:PAD_T, x2:bx+4,y2:PAD_T, stroke:'#1a56a0','stroke-width':'1.2' }));
+    svg.appendChild(svgEl('line',{ x1:bx-4,y1:PAD_T+panelH, x2:bx+4,y2:PAD_T+panelH, stroke:'#1a56a0','stroke-width':'1.2' }));
+    const totLbl = svgEl('text',{ x:bx, y:PAD_T+panelH/2+3, 'text-anchor':'middle',
+        fill:'#1a56a0','font-size':'7.5','font-weight':'700',
+        'font-family':'Segoe UI,system-ui,sans-serif',
+        transform:`rotate(-90,${bx},${PAD_T+panelH/2})` });
+    totLbl.textContent = `${totalT} mm total`;
+    svg.appendChild(totLbl);
+
+    /* neutral axis */
+    if (naFromTop !== null) {
+        const naY = PAD_T + naFromTop*scale;
+        svg.appendChild(svgEl('line',{ x1:xP,y1:naY, x2:xP+PANEL_W,y2:naY,
+            stroke:'#e74c3c','stroke-width':'1.4','stroke-dasharray':'5,3' }));
+        const naLbl = svgEl('text',{ x:xP+PANEL_W/2, y:naY-3,
+            'text-anchor':'middle', fill:'#e74c3c',
+            'font-size':'7','font-weight':'700',
+            'font-family':'Segoe UI,system-ui,sans-serif' });
+        naLbl.textContent = `NA ${naFromTop.toFixed(1)} mm`;
+        svg.appendChild(naLbl);
+    }
+
+    /* bottom label */
+    const bl = svgEl('text',{ x:xP+PANEL_W/2, y:PAD_T+panelH+13,
+        'text-anchor':'middle', fill:'#bbb','font-size':'7',
+        'font-family':'Segoe UI,system-ui,sans-serif' });
+    bl.textContent = 'Primary Direction →';
+    svg.appendChild(bl);
+
+    wrap.appendChild(svg);
+}
+
+/* live update */
+document.getElementById('layerTableBody').addEventListener('input',  ()=>updateDiagram());
+document.getElementById('layerTableBody').addEventListener('change', ()=>updateDiagram());
+new MutationObserver(()=>updateDiagram()).observe(
+    document.getElementById('layerTableBody'), { childList:true });
+
+/* patch setMethod */
+const _origSet = setMethod;
+window.setMethod = function(method) {
+    _origSet(method);
+    document.getElementById('methodHint').textContent = method === 'shear-analogy'
+        ? '3 – 9 layers \u00a0·\u00a0 symmetric layup required'
+        : '3 or 5 layers only';
+    updateDiagram();
+};
+
+/* patch runCalculation — draw NA after calc */
+const _origRun = runCalculation;
+window.runCalculation = function() {
+    _origRun();
+    try {
+        if (currentResult && currentResult.layerResults.length) {
+            const rows = [...document.querySelectorAll('#layerTableBody tr')];
+            let sumEA=0, sumEAz=0;
+            currentResult.layerResults.forEach((r,i)=>{
+                const t = parseFloat(rows[i]?.querySelector('.inp-thickness')?.value)||r.thickness;
+                const EA = r.E * 1000 * t;
+                sumEA  += EA;
+                sumEAz += EA * r.zi;
+            });
+            const na = sumEAz/sumEA;
+            if (!isNaN(na)) updateDiagram(na);
+        }
+    } catch(e){}
+};
+</script>
 </body>
 </html>
